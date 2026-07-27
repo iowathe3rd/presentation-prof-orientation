@@ -3,13 +3,12 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useReducer,
   useRef,
 } from "react";
 
 const TOTAL_SLIDES = 6;
-const MAX_STEPS = [0, 4, 3, 4, 5, 4];
+const MAX_STEPS = [0, 4, 3, 2, 5, 4];
 
 type DeckState = {
   slide: number;
@@ -170,33 +169,53 @@ function BankDesktopScene({ step }: { step: number }) {
         title="Банк сегодня — это IT-компания,"
         accent="которая работает с деньгами"
       />
-      <div className="bank-map">
-        <WindowFrame title="BANK_CORE.sys" className="bank-core">
-          <div className="bank-building" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
+      <WindowFrame title="BANK_TECH_STACK.exe" className="bank-stack">
+        <div className="bank-stack__context">
+          <span>ОДНА ОПЕРАЦИЯ</span>
+          <div className="bank-stack__pulse" aria-hidden="true">
+            <i />
           </div>
-          <strong>БАНК</strong>
-          <small>миллионы операций</small>
-        </WindowFrame>
-        <div className="bank-systems">
+          <strong>ПЯТЬ СИСТЕМ РАБОТАЮТ ВМЕСТЕ</strong>
+        </div>
+        <div className="bank-stack__flow">
           {bankSystems.map(([kind, label], index) => (
-            <div
-              className={`system-file ${index < Math.max(1, step + 1) ? "is-active" : ""}`}
-              key={kind}
-            >
-              <PixelIcon kind={kind} />
-              <span>
-                {label.split("\n").map((line) => (
-                  <span key={line}>{line}</span>
-                ))}
-              </span>
+            <div className="bank-stack__segment" key={kind}>
+              <div
+                className={`stack-card ${index < Math.max(1, step + 1) ? "is-active" : ""}`}
+              >
+                <span className="stack-card__index">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <PixelIcon kind={kind} />
+                <strong>
+                  {label.split("\n").map((line) => (
+                    <span key={line}>{line}</span>
+                  ))}
+                </strong>
+                <small>
+                  {
+                    ["интерфейс", "операция", "информация", "защита", "помощь"][
+                      index
+                    ]
+                  }
+                </small>
+              </div>
+              {index < bankSystems.length - 1 && (
+                <span
+                  className={`stack-arrow ${index < step ? "is-active" : ""}`}
+                  aria-hidden="true"
+                >
+                  →
+                </span>
+              )}
             </div>
           ))}
         </div>
-      </div>
+        <div className="bank-stack__result">
+          <span>РЕЗУЛЬТАТ</span>
+          <strong>быстрая и безопасная банковская операция</strong>
+        </div>
+      </WindowFrame>
     </div>
   );
 }
@@ -263,63 +282,70 @@ function CallAnalyzerScene({ step }: { step: number }) {
         title="Один разговор превращается"
         accent="в данные для решения"
       />
-      <div className="call-layout">
-        <WindowFrame title="demo_call_004.wav" className="audio-window">
-          <div className="audio-meta">
-            <span>00:18</span>
-            <span>LOCAL DEMO</span>
-          </div>
-          <div className={`waveform ${step >= 1 ? "is-playing" : ""}`}>
-            {waveform.map((height, index) => (
-              <i key={index} style={{ height: `${height}%` }} />
-            ))}
-          </div>
-          <div className="audio-track">
-            <span style={{ width: `${step >= 1 ? 64 : 0}%` }} />
-          </div>
-        </WindowFrame>
+      <WindowFrame title="CALL_ANALYZER.ai // LOCAL DEMO" className="call-workbench">
+        <div className="call-workbench__steps" aria-label={`Этап ${step + 1} из 3`}>
+          {["РАЗГОВОР", "АНАЛИЗ", "РЕШЕНИЕ"].map((label, index) => (
+            <div className={step >= index ? "is-active" : ""} key={label}>
+              <span>{index + 1}</span>
+              <strong>{label}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="call-workbench__body">
+          <section className="call-source">
+            <div className="call-source__meta">
+              <span>demo_call_004.wav</span>
+              <span>00:18</span>
+            </div>
+            <div className={`waveform ${step === 0 ? "is-playing" : ""}`}>
+              {waveform.slice(0, 18).map((height, index) => (
+                <i key={index} style={{ height: `${height}%` }} />
+              ))}
+            </div>
+            <blockquote>
+              «Я пытался перевести деньги, но приложение показало ошибку.
+              Поддержка ответила только через час».
+            </blockquote>
+          </section>
 
-        <WindowFrame
-          title="transcript.txt"
-          className={`transcript-window reveal ${step >= 2 ? "is-visible" : ""}`}
-        >
-          <p>
-            «Я пытался перевести деньги, но приложение показало ошибку.
-            Поддержка ответила только через час».
-          </p>
-        </WindowFrame>
+          <span className={`workbench-arrow ${step >= 1 ? "is-active" : ""}`}>
+            →
+          </span>
 
-        <WindowFrame
-          title="analysis.result"
-          className={`analysis-window reveal ${step >= 3 ? "is-visible" : ""}`}
-        >
-          <dl>
-            <div>
-              <dt>ТЕМА</dt>
-              <dd>перевод денег</dd>
-            </div>
-            <div>
-              <dt>ПРОБЛЕМА</dt>
-              <dd>техническая ошибка</dd>
-            </div>
-            <div>
-              <dt>ТОНАЛЬНОСТЬ</dt>
-              <dd>недовольство</dd>
-            </div>
-            <div>
-              <dt>РЕЗУЛЬТАТ</dt>
-              <dd>требуется помощь</dd>
-            </div>
-          </dl>
-        </WindowFrame>
-      </div>
-      <div className={`insight-dialog reveal ${step >= 4 ? "is-visible" : ""}`}>
-        <span className="insight-dialog__count">1000×</span>
-        <p>
-          разговоры → повторяющиеся проблемы
-          <strong>→ решения для бизнеса</strong>
-        </p>
-      </div>
+          <section className={`call-analysis ${step >= 1 ? "is-active" : ""}`}>
+            <p className="workbench-label">AI ВЫДЕЛИЛ</p>
+            <dl>
+              <div>
+                <dt>ТЕМА</dt>
+                <dd>перевод денег</dd>
+              </div>
+              <div>
+                <dt>ПРОБЛЕМА</dt>
+                <dd>техническая ошибка</dd>
+              </div>
+              <div>
+                <dt>ТОНАЛЬНОСТЬ</dt>
+                <dd>недовольство</dd>
+              </div>
+              <div>
+                <dt>ДЕЙСТВИЕ</dt>
+                <dd>требуется помощь</dd>
+              </div>
+            </dl>
+          </section>
+
+          <span className={`workbench-arrow ${step >= 2 ? "is-active" : ""}`}>
+            →
+          </span>
+
+          <section className={`call-outcome ${step >= 2 ? "is-active" : ""}`}>
+            <p className="workbench-label">БИЗНЕС ВИДИТ</p>
+            <span className="call-outcome__count">1000×</span>
+            <p>разговоров складываются в общую картину</p>
+            <strong>Проблемы становятся видимыми — их можно исправить</strong>
+          </section>
+        </div>
+      </WindowFrame>
     </div>
   );
 }
@@ -356,20 +382,6 @@ function EngineerWorkspaceScene({ step }: { step: number }) {
           </div>
         ))}
       </div>
-      <WindowFrame title="toolbox" className="toolbox-window">
-        <div>
-          <span>PY</span> Python
-        </div>
-        <div>
-          <span>SQL</span> Данные
-        </div>
-        <div>
-          <span>API</span> Интеграции
-        </div>
-        <div>
-          <span>BOX</span> Docker
-        </div>
-      </WindowFrame>
     </div>
   );
 }
@@ -382,6 +394,13 @@ const learningSteps = [
 ];
 
 function StartWizardScene({ step }: { step: number }) {
+  const ideas = [
+    "анализ отзывов",
+    "распознавание текста",
+    "классификация сообщений",
+    "простой AI-бот",
+  ];
+
   return (
     <div className="scene scene--wizard">
       <SceneHeading
@@ -389,37 +408,37 @@ function StartWizardScene({ step }: { step: number }) {
         title="Начни с маленькой проблемы —"
         accent="и собери работающий проект"
       />
-      <div className="wizard-layout">
-        <WindowFrame title="Создание первого AI-проекта" className="wizard-window">
-          <p className="wizard-window__label">Путь инженера</p>
-          <ol>
-            {learningSteps.map((item, index) => (
-              <li className={step >= index + 1 ? "is-active" : ""} key={item}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{item}</strong>
-                <i aria-hidden="true">{step >= index + 1 ? "OK" : "—"}</i>
-              </li>
-            ))}
-          </ol>
-        </WindowFrame>
-        <WindowFrame title="IDEAS" className="ideas-window">
-          <p>Папка с идеями</p>
+      <div className="start-roadmap">
+        <div className="start-roadmap__header">
+          <span>NEW_PROJECT.exe</span>
+          <strong>ТВОЙ ПЕРВЫЙ МАРШРУТ</strong>
+        </div>
+        <ol className="start-roadmap__steps">
+          {learningSteps.map((item, index) => (
+            <li className={step >= index + 1 ? "is-active" : ""} key={item}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{item}</strong>
+              {index < learningSteps.length - 1 && <i aria-hidden="true">→</i>}
+            </li>
+          ))}
+        </ol>
+        <div className="start-roadmap__ideas">
+          <span>ИДЕИ ДЛЯ СТАРТА</span>
           <ul>
-            <li>анализ отзывов</li>
-            <li>распознавание текста</li>
-            <li>классификация сообщений</li>
-            <li>простой AI-бот</li>
+            {ideas.map((idea) => (
+              <li key={idea}>{idea}</li>
+            ))}
           </ul>
-        </WindowFrame>
+        </div>
       </div>
-      <div className={`final-message reveal ${step >= 4 ? "is-visible" : ""}`}>
+      <div className={`start-finale reveal ${step >= 4 ? "is-visible" : ""}`}>
         <p>
-          AI — это инструмент. Самое важное — понимать,
+          AI — это инструмент. Главное — понимать,
           <strong>какую проблему ты хочешь решить.</strong>
         </p>
-        <div className="question-dialog">
+        <div className="start-finale__question">
           <span>Есть вопросы?</span>
-          <button tabIndex={-1}>ДА</button>
+          <span className="terminal-cursor" aria-hidden="true" />
         </div>
       </div>
     </div>
@@ -529,9 +548,9 @@ function Help({ onClose }: { onClose: () => void }) {
 }
 
 export default function Home() {
-  const hashState = useMemo(readHash, []);
   const [state, dispatch] = useReducer(reducer, {
-    ...hashState,
+    slide: 0,
+    steps: [0, 0, 0, 0, 0, 0],
     overview: false,
     help: false,
     transitioning: false,
@@ -547,6 +566,17 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const initial = readHash();
+    if (initial.slide !== 0 || initial.steps[initial.slide] !== 0) {
+      dispatch({
+        type: "GO",
+        slide: initial.slide,
+        step: initial.steps[initial.slide],
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     const timer = window.setTimeout(
       () => dispatch({ type: "UNLOCK" }),
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300,
@@ -556,6 +586,12 @@ export default function Home() {
 
   useEffect(() => {
     const step = state.steps[state.slide];
+    if (
+      window.location.hash.startsWith("#reader-") &&
+      window.matchMedia("(max-width: 700px), (orientation: portrait)").matches
+    ) {
+      return;
+    }
     window.history.replaceState(
       null,
       "",
@@ -566,6 +602,7 @@ export default function Home() {
 
   useEffect(() => {
     const onHashChange = () => {
+      if (window.location.hash.startsWith("#reader-")) return;
       const next = readHash();
       dispatch({
         type: "GO",
