@@ -13,8 +13,6 @@ const MAX_STEPS = [0, 4, 3, 2, 5, 4];
 type DeckState = {
   slide: number;
   steps: number[];
-  overview: boolean;
-  help: boolean;
   transitioning: boolean;
 };
 
@@ -22,8 +20,6 @@ type DeckAction =
   | { type: "NEXT" }
   | { type: "PREVIOUS" }
   | { type: "GO"; slide: number; step?: number }
-  | { type: "OVERVIEW"; open: boolean }
-  | { type: "HELP"; open: boolean }
   | { type: "UNLOCK" };
 
 const slideTitles = [
@@ -89,15 +85,9 @@ function reducer(state: DeckState, action: DeckAction): DeckState {
         ...state,
         slide: action.slide,
         steps,
-        overview: false,
-        help: false,
         transitioning: true,
       };
     }
-    case "OVERVIEW":
-      return { ...state, overview: action.open, help: false };
-    case "HELP":
-      return { ...state, help: action.open, overview: false };
     case "UNLOCK":
       return { ...state, transitioning: false };
   }
@@ -483,76 +473,10 @@ function Slide({
   return scenes[slide];
 }
 
-function Overview({
-  activeSlide,
-  onSelect,
-  onClose,
-}: {
-  activeSlide: number;
-  onSelect: (slide: number) => void;
-  onClose: () => void;
-}) {
-  return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="Обзор сцен">
-      <div className="overlay__bar">
-        <strong>ОБЗОР СИСТЕМЫ</strong>
-        <button onClick={onClose} aria-label="Закрыть обзор">
-          ×
-        </button>
-      </div>
-      <div className="overview-grid">
-        {slideTitles.map((title, index) => (
-          <button
-            className={index === activeSlide ? "is-active" : ""}
-            onClick={() => onSelect(index)}
-            key={title}
-          >
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <PixelIcon
-              kind={["boot", "bank", "folder", "call", "model", "project"][index]}
-            />
-            <strong>{title}</strong>
-          </button>
-        ))}
-      </div>
-      <p className="overlay__hint">Выберите сцену · Esc — закрыть</p>
-    </div>
-  );
-}
-
-function Help({ onClose }: { onClose: () => void }) {
-  const shortcuts = [
-    ["→ / Space", "следующий шаг"],
-    ["← / Backspace", "назад"],
-    ["Home / End", "первая / последняя сцена"],
-    ["O", "обзор сцен"],
-    ["F", "полный экран"],
-    ["Esc", "закрыть окно"],
-  ];
-  return (
-    <div className="overlay overlay--help" role="dialog" aria-modal="true">
-      <WindowFrame title="KEYBOARD_HELP.txt">
-        <h2>Управление</h2>
-        <dl>
-          {shortcuts.map(([key, action]) => (
-            <div key={key}>
-              <dt>{key}</dt>
-              <dd>{action}</dd>
-            </div>
-          ))}
-        </dl>
-        <button onClick={onClose}>ПОНЯТНО</button>
-      </WindowFrame>
-    </div>
-  );
-}
-
 export default function Home() {
   const [state, dispatch] = useReducer(reducer, {
     slide: 0,
     steps: [0, 0, 0, 0, 0, 0],
-    overview: false,
-    help: false,
     transitioning: false,
   });
   const headingRef = useRef<HTMLDivElement>(null);
@@ -619,13 +543,6 @@ export default function Home() {
       const target = event.target as HTMLElement;
       if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
 
-      if (event.key === "Escape") {
-        dispatch({ type: "OVERVIEW", open: false });
-        dispatch({ type: "HELP", open: false });
-        return;
-      }
-      if (state.overview || state.help) return;
-
       const forward = ["ArrowRight", "ArrowDown", " ", "PageDown", "Enter"];
       const backward = ["ArrowLeft", "ArrowUp", "Backspace", "PageUp"];
 
@@ -641,39 +558,17 @@ export default function Home() {
       } else if (event.key === "End") {
         event.preventDefault();
         dispatch({ type: "GO", slide: TOTAL_SLIDES - 1, step: 0 });
-      } else if (event.key.toLowerCase() === "o") {
-        dispatch({ type: "OVERVIEW", open: true });
       } else if (event.key.toLowerCase() === "f") {
         toggleFullscreen();
-      } else if (event.key === "?") {
-        dispatch({ type: "HELP", open: true });
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [state.help, state.overview, toggleFullscreen]);
+  }, [toggleFullscreen]);
 
   return (
     <main className="presentation-shell">
       <div className="desktop-frame desktop-deck">
-        <header className="menu-bar">
-          <div className="menu-bar__brand">
-            <span className="brand-chip" aria-hidden="true">
-              AI
-            </span>
-            <strong>AI_BANK_OS</strong>
-          </div>
-          <nav aria-label="Системное меню">
-            <button onClick={() => dispatch({ type: "OVERVIEW", open: true })}>
-              ОБЗОР
-            </button>
-            <button onClick={() => dispatch({ type: "HELP", open: true })}>
-              ПОМОЩЬ
-            </button>
-          </nav>
-          <span className="menu-bar__edition">EDUCATIONAL DEMO</span>
-        </header>
-
         <div
           className="slide-viewport"
           ref={headingRef}
@@ -692,12 +587,6 @@ export default function Home() {
             aria-label="Назад"
           >
             ←
-          </button>
-          <button
-            className="status-button status-button--overview"
-            onClick={() => dispatch({ type: "OVERVIEW", open: true })}
-          >
-            ОБЗОР
           </button>
           <div className="progress" aria-label={`Слайд ${state.slide + 1} из 6`}>
             <span className="progress__number">
@@ -729,35 +618,8 @@ export default function Home() {
             →
           </button>
         </footer>
-
-        {state.overview && (
-          <Overview
-            activeSlide={state.slide}
-            onSelect={(slide) => dispatch({ type: "GO", slide, step: 0 })}
-            onClose={() => dispatch({ type: "OVERVIEW", open: false })}
-          />
-        )}
-        {state.help && (
-          <Help onClose={() => dispatch({ type: "HELP", open: false })} />
-        )}
       </div>
       <div className="mobile-reader">
-        <header className="mobile-reader__header">
-          <span className="brand-chip" aria-hidden="true">
-            AI
-          </span>
-          <div>
-            <strong>AI_BANK_OS</strong>
-            <small>мобильная версия</small>
-          </div>
-        </header>
-        <nav className="mobile-reader__nav" aria-label="Содержание">
-          {slideTitles.map((title, index) => (
-            <a href={`#reader-${index + 1}`} key={title}>
-              {String(index + 1).padStart(2, "0")} {title}
-            </a>
-          ))}
-        </nav>
         {slideTitles.map((title, index) => (
           <article
             className="mobile-reader__scene"
